@@ -1,0 +1,1 @@
+module Hits.Types() where
