@@ -3,7 +3,6 @@ module Hits.Core (
   FileChanges
   ) where
 
-import Data.Aeson (ToJSON)
 import Data.Attoparsec.Text as AP
 import Data.Either
 import Data.Text as T
