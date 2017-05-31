@@ -1,16 +1,25 @@
 {-# Language OverloadedStrings #-}
 module Main where
 
-import Web.Scotty
-import Hits as H (status)
+import Web.Scotty as S
+import Network.Wai.Middleware.Static
+import Network.Wai.Middleware.RequestLogger
+import Hits as H
 import Data.Aeson.Text as A (encodeToLazyText)
 import Control.Monad.IO.Class
+import Text.Blaze.Html5 hiding (main)
+import Text.Blaze.Html.Renderer.Text
 
 webApp :: ScottyM ()
 webApp = do
+  middleware $ staticPolicy (noDots >-> addBase "static")
+  middleware logStdoutDev
   get "/status" $ do
     st <- liftIO H.status
-    text $ A.encodeToLazyText st
+    S.text $ A.encodeToLazyText st
+  get "/" $ do
+    S.html . renderHtml $ do
+      h1 "hits"
 
 
 main :: IO ()
