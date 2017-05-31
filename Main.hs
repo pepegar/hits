@@ -17,6 +17,9 @@ webApp = do
   get "/status" $ do
     st <- liftIO H.status
     S.text $ A.encodeToLazyText st
+  get "/log" $ do
+    st <- liftIO H.glog
+    S.text $ A.encodeToLazyText st
   get "/" $ do
     S.html . renderHtml $ do
       h1 "hits"

@@ -1,6 +1,7 @@
+{-# Language OverloadedStrings #-}
 module Hits.Core (
   status,
-  FileChanges
+  glog
   ) where
 
 import Data.Attoparsec.Text as AP
@@ -8,24 +9,35 @@ import Data.Either
 import Data.Text as T
 import System.Process as P
 
-import Hits.Types (FileChanges, fileChange)
+import Hits.Types (FileChanges, Commit)
+import Hits.Parsing (fileChange, commitP)
   
-
-process :: IO Text
-process = pack <$> P.readCreateProcess command input
-  where
-    command = P.shell "git status -s"
-    input = ""
-
-
-parsed = parse <$> process
-  where parse x = case T.lines x of
-          [] -> []
-          (x : xs) -> xs
-          
 
 status :: IO [FileChanges]
 status = do
   lines <- parsed
   return $ rights $ AP.parseOnly fileChange <$> lines
-  
+
+  where process :: IO Text
+        process = pack <$> P.readCreateProcess command input
+          where
+            command = P.shell "git status -s"
+            input = ""
+
+        parsed :: IO [Text]
+        parsed = parse <$> process
+          where parse x = case T.lines x of
+                      [] -> []
+                      (x : xs) -> xs
+
+
+glog :: IO (Either String [Commit])
+glog = do
+  stdout <- gitLog
+  gitLog >>= (putStrLn . T.unpack)
+  return $ parseOnly (commitP `sepBy` AP.endOfLine) stdout
+
+  where gitLog :: IO Text
+        gitLog = pack <$> P.readCreateProcess command input
+          where command = P.shell "git log"
+                input = ""
