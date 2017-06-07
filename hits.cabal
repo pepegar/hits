@@ -37,6 +37,7 @@ executable hits
                      , blaze-html
                      , wai
                      , wai-middleware-static
+                     , wai-cors
                      , wai-extra
                      , aeson
   default-language:    Haskell2010

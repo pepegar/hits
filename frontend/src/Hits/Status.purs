@@ -1,9 +1,10 @@
 module Hits.Status (
   status,
-  Query
+  Query (..)
   ) where
 
 
+import Prelude (show)
 import Control.Monad.Aff (Aff)
 import Data.Argonaut (Json)
 import Data.Either (Either(..))
@@ -11,6 +12,7 @@ import Data.Maybe (Maybe(..))
 import Data.Functor (map)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import Hits.Status.Types (FileChange(..), FileChanges, decodeFileChanges)
 import Network.HTTP.Affjax as AX
 import Prelude (type (~>), Unit, Void, bind, const, discard, pure, ($))
@@ -39,15 +41,13 @@ status =
   
     render :: State -> H.ComponentHTML Query
     render state =
-      HH.body_
-        [ HH.h1_ [ HH.text "Hits" ]
-        , HH.div_
-          [ HH.h2_ [ HH.text "status" ]
-          , HH.ul_ $ map listChange state.changes
-          ]
+      HH.div
+        [ HP.class_ (H.ClassName "status")]
+        [ HH.h2_ [ HH.text "status" ]
+        , HH.ul_ $ map listChange state.changes
         ]
         where
-          listChange (FileChange change) = HH.li_ [HH.text change.fileName]
+          listChange (FileChange change) = HH.li [HP.class_ (H.ClassName $ show change.changeType)] [HH.text change.fileName]
   
     eval :: Query ~> H.ComponentDSL State Query Void (Aff (ajax :: AX.AJAX | eff))
     eval = case _ of

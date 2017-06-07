@@ -31,13 +31,17 @@ status = do
                       (x : xs) -> xs
 
 
-glog :: IO (Either String [Commit])
+glog :: IO [Commit]
 glog = do
   stdout <- gitLog
   gitLog >>= (putStrLn . T.unpack)
-  return $ parseOnly (commitP `sepBy` AP.endOfLine) stdout
+  return $ toList $ parseOnly (commitP `sepBy` AP.endOfLine) stdout
 
   where gitLog :: IO Text
         gitLog = pack <$> P.readCreateProcess command input
           where command = P.shell "git log"
                 input = ""
+
+        toList :: Either String [Commit] -> [Commit]
+        toList (Right x) = x
+        toList _ = []
