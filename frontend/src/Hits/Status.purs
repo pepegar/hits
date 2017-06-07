@@ -1,33 +1,30 @@
 module Hits.Status (
   status,
-  Query,
-  Message
+  Query
   ) where
 
 
-
-import Prelude
+import Control.Monad.Aff (Aff)
+import Data.Argonaut (Json)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Functor (map)
 import Halogen as H
 import Halogen.HTML as HH
+import Hits.Status.Types (FileChange(..), FileChanges, decodeFileChanges)
 import Network.HTTP.Affjax as AX
-
-data Change = Added
-            | Deleted
-            | Modified
-            | Renamed
-
-data FileChanges = FileChanges {
-  changeType :: Change,
-  fileName :: String
-  }
-
-type State = Array FileChanges
-data Query a = Status [FileChanges]
-data Message = Changed State
+import Prelude (type (~>), Unit, Void, bind, const, discard, pure, ($))
 
 
-status :: forall m. H.Component HH.HTML Query Unit Message m
+type State = {
+     loading :: Boolean,
+     changes :: FileChanges
+}
+
+data Query a = Status a
+
+
+status :: forall eff. H.Component HH.HTML Query Unit Void (Aff (ajax :: AX.AJAX | eff))
 status =
   H.component
       { initialState: const initialState
@@ -38,13 +35,29 @@ status =
     where
   
     initialState :: State
-    initialState = []
+    initialState = {loading: false, changes: []}
   
     render :: State -> H.ComponentHTML Query
-    render state = HH.div_
-      [ HH.text "lololol"]
+    render state =
+      HH.body_
+        [ HH.h1_ [ HH.text "Hits" ]
+        , HH.div_
+          [ HH.h2_ [ HH.text "status" ]
+          , HH.ul_ $ map listChange state.changes
+          ]
+        ]
+        where
+          listChange (FileChange change) = HH.li_ [HH.text change.fileName]
   
-    eval :: Query ~> H.ComponentDSL State Query Message m
+    eval :: Query ~> H.ComponentDSL State Query Void (Aff (ajax :: AX.AJAX | eff))
     eval = case _ of
-      Status x -> do
-        pure x
+      Status next -> do
+        H.modify (_ { loading = true})
+        response <- H.liftAff $ AX.get "http://localhost:8080/status"
+        H.modify (_ { loading = false, changes = fileChanges response.response })
+        pure next
+        where
+          fileChanges :: Json -> FileChanges
+          fileChanges json = case (decodeFileChanges json) of
+            Right x -> x
+            _ -> []
