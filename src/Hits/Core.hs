@@ -34,7 +34,6 @@ status = do
 glog :: IO [Commit]
 glog = do
   stdout <- gitLog
-  gitLog >>= (putStrLn . T.unpack)
   return $ toList $ parseOnly (commitP `sepBy` AP.endOfLine) stdout
 
   where gitLog :: IO Text
