@@ -22,9 +22,8 @@ webApp = do
   get "/log" $ do
     st <- liftIO H.glog
     S.text $ A.encodeToLazyText st
-  get "/" $ do
-    S.html . renderHtml $ do
-      h1 "hits"
+  get "/" $ file "./static/index.html"
+
 
 
 main :: IO ()
